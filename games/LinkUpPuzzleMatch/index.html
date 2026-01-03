@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Unity WebGL Game</title>
+
+  <!-- Unity Loader Script -->
+  <script src="Build/LinkUpPuzzleMatch.loader.js"></script>
+
+  <!-- Google Ad Manager GPT -->
+  <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
+  <!-- AdinPlay -->
+  <!-- <script async src="https://cdn.adinplay.com/static/gameads.js"></script> -->
+
+  <!-- Shared CSS -->
+  <link rel="stylesheet" href="https://www.khelogy.com/shared-styles.css">
+
+  <!-- Shared JS (Loading Screen, Particles, Ads) -->
+  <script src="https://www.khelogy.com/shared-loading.js"></script>
+  <script src="https://www.khelogy.com/shared-particles.js"></script>
+  <script src="https://www.khelogy.com/shared-ads.js"></script>
+</head>
+
+<body>
+  <div id="unity-container">
+    <canvas id="unity-canvas"></canvas>
+
+  </div>
+
+  <!-- Unity Game Bootstrap Script -->
+  <script>
+    function isIOS() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    }
+
+    var buildUrl = "Build";
+    var config = {
+      dataUrl: buildUrl + "/LinkUpPuzzleMatch.data.br",
+      frameworkUrl: buildUrl + "/LinkUpPuzzleMatch.framework.js.br",
+      codeUrl: buildUrl + "/LinkUpPuzzleMatch.wasm.br",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "YourCompany",
+      productName: "YourProduct",
+      productVersion: "1.0",
+      showBanner: (msg, type) => { },
+      initialMemory: isIOS() ? 128 * 1024 * 1024 : 256 * 1024 * 1024,
+      memory: isIOS() ? 512 * 1024 * 1024 : 1024 * 1024 * 1024,
+      heapGrowth: true
+    };
+
+    if (isIOS()) {
+      config.devicePixelRatio = 1;
+      config.matchWebGLToCanvasSize = false;
+    }
+
+    const canvas = document.querySelector("#unity-canvas");
+    const bar = document.getElementById("loading-bar");
+    const text = document.getElementById("loading-text");
+    const screen = document.getElementById("loading-screen");
+
+    createUnityInstance(canvas, config, progress => {
+      const percent = (progress * 100).toFixed(0);
+      bar.style.width = `${percent}%`;
+
+      if (percent < 100) {
+        text.textContent = `Loading... ${percent}%`;
+      } else {
+        text.textContent = "Please wait, we are almost ready...";
+        screen.classList.add("clear");
+      }
+    })
+      .then(instance => {
+        window.gameInstance = instance;
+
+        text.textContent = "Game is ready!";
+        setTimeout(() => {
+          screen.style.opacity = "0";
+          setTimeout(() => screen.style.display = "none", 600);
+        }, 1000);
+      });
+  </script>
+</body>
+
+</html>
