@@ -1,86 +1,315 @@
 <!DOCTYPE html>
 <html lang="en-us">
-
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Unity WebGL Game</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Khelogy | Smart Play Games</title>
 
-  <!-- Unity Loader Script -->
-  <script src="Build/LinkUpPuzzleMatch.loader.js"></script>
-
-  <!-- Google Ad Manager GPT -->
+  <script src="Build/Penguin Adventure Icy Platform Quest_DisableCompression.loader.js"></script>
   <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
-  <!-- AdinPlay -->
-  <!-- <script async src="https://cdn.adinplay.com/static/gameads.js"></script> -->
+  <script async src="https://cdn.adinplay.com/static/gameads.js"></script>
 
-  <!-- Shared CSS -->
-  <link rel="stylesheet" href="https://www.khelogy.com/shared-styles.css">
+  <script>
+    window.adManagerActive = true;
+    window.googletag = window.googletag || { cmd: [] };
+    let interstitialSlot, rewardedSlot;
 
-  <!-- Shared JS (Loading Screen, Particles, Ads) -->
-  <script src="https://www.khelogy.com/shared-loading.js"></script>
-  <script src="https://www.khelogy.com/shared-particles.js"></script>
-  <script src="https://www.khelogy.com/shared-ads.js"></script>
+    googletag.cmd.push(function () {
+      interstitialSlot = googletag.defineSlot('/123456789/webgl_interstitial', [1, 1], 'div-gpt-ad-interstitial')
+        .addService(googletag.pubads());
+      rewardedSlot = googletag.defineSlot('/123456789/webgl_rewarded', [1, 1], 'div-gpt-ad-rewarded')
+        .addService(googletag.pubads());
+      googletag.pubads().addEventListener('slotRenderEnded', e => {
+        if (e.slot === interstitialSlot && e.isEmpty) closeInterstitial();
+        if (e.slot === rewardedSlot && e.isEmpty) tryShowAdinPlayRewarded();
+      });
+      googletag.enableServices();
+    });
+
+    function ShowInterstitialAdFromUnity() {
+      const o = document.getElementById("interstitialAd");
+      o.style.display = "flex";
+      if (window.adManagerActive && interstitialSlot) {
+        googletag.cmd.push(() => {
+          googletag.display('div-gpt-ad-interstitial');
+          googletag.pubads().refresh([interstitialSlot]);
+        });
+      } else closeInterstitial();
+    }
+
+    function closeInterstitial() {
+      document.getElementById("interstitialAd").style.display = "none";
+      gameInstance.SendMessage("ShowAd", "OnInterstitialComplete");
+    }
+
+    function ShowRewardedAdFromUnity() {
+      const o = document.getElementById("rewardedAd");
+      o.style.display = "flex";
+      if (window.adManagerActive && rewardedSlot) {
+        googletag.cmd.push(() => {
+          googletag.display('div-gpt-ad-rewarded');
+          googletag.pubads().refresh([rewardedSlot]);
+        });
+      } else tryShowAdinPlayRewarded();
+    }
+
+    function tryShowAdinPlayRewarded() {
+      if (typeof aipShowAd === "function") {
+        aipShowAd({ onComplete: closeRewarded, onError: showNoAdFound });
+      } else showNoAdFound();
+    }
+
+    function showNoAdFound() {
+      const rewarded = document.getElementById("rewardedAd");
+      rewarded.innerHTML = `
+        <div class="no-ad-blur" id="noAdOverlay">
+          <div class="no-ad-text">Ads not found</div>
+        </div>`;
+      const overlay = document.getElementById("noAdOverlay");
+      overlay.classList.add("fade-in");
+      setTimeout(() => {
+        overlay.classList.remove("fade-in");
+        overlay.classList.add("fade-out");
+        setTimeout(closeRewarded, 800);
+      }, 700);
+    }
+
+    function closeRewarded() {
+      const r = document.getElementById("rewardedAd");
+      r.style.display = "none";
+      r.innerHTML = `<div id="div-gpt-ad-rewarded"></div>`;
+      gameInstance.SendMessage("ShowAd", "OnRewardedComplete");
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+    html, body {
+      margin: 0; padding: 0; overflow: hidden; height: 100%;
+      font-family: 'Orbitron', sans-serif;
+      background: #000;
+    }
+
+    #unity-container { width: 100%; height: 100%; position: relative; }
+    canvas { width: 100%; height: 100%; display: block; background: #000; }
+
+    /* Loading Screen */
+    #loading-screen {
+      position: absolute; inset: 0;
+      background: #000;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      z-index: 9999;
+      opacity: 0;
+      backdrop-filter: blur(12px);
+      transition: opacity 1s ease, backdrop-filter 1.8s ease;
+      animation: fadeInScreen 1.2s ease forwards;
+    }
+
+    #loading-screen.clear { backdrop-filter: blur(0); }
+
+    @keyframes fadeInScreen {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Neon particle canvas behind content */
+    #particle-canvas {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background: transparent;
+    }
+
+    .loading-logo {
+      width: 300px;
+      margin-bottom: 35px;
+      animation: logoFloat 2.8s ease-in-out infinite;
+      filter: drop-shadow(0 0 10px rgba(255, 220, 50, 0.8)) drop-shadow(0 0 20px rgba(255, 220, 50, 0.3));
+      z-index: 2;
+    }
+
+    @keyframes logoFloat {
+      0% { transform: translateY(0); opacity: 1; }
+      50% { transform: translateY(-6px); opacity: 0.97; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    .loading-bar-container {
+      width: 45%;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50px;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(255, 204, 0, 0.3) inset;
+      z-index: 2;
+    }
+
+    .loading-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ffcc00, #ffee58, #ffcc00);
+      background-size: 200% 100%;
+      animation: barFlow 3s linear infinite;
+      box-shadow: 0 0 15px #ffcc00, 0 0 25px #ffee58 inset;
+      border-radius: 50px;
+      transition: width 0.4s ease-in-out;
+    }
+
+    @keyframes barFlow {
+      0% { background-position: 0% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .loading-text {
+      color: #fff;
+      font-size: 20px;
+      margin-top: 18px;
+      text-shadow: 0 0 6px #ffcc00;
+      letter-spacing: 1px;
+      animation: textGlow 1.8s ease-in-out infinite alternate;
+      z-index: 2;
+    }
+
+    @keyframes textGlow {
+      from { text-shadow: 0 0 6px #ffcc00, 0 0 10px #ffee58; }
+      to { text-shadow: 0 0 15px #ffee58, 0 0 25px #ffcc00; }
+    }
+
+    .ad-overlay {
+      position: absolute; inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 9999;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    .no-ad-blur {
+      width: 100%; height: 100%;
+      backdrop-filter: blur(6px);
+      background: rgba(0,0,0,0.3);
+      display: flex; justify-content: center; align-items: center;
+      opacity: 0; transition: opacity 0.6s ease;
+    }
+
+    .no-ad-blur.fade-in { opacity: 1; }
+    .no-ad-blur.fade-out { opacity: 0; }
+
+    .no-ad-text {
+      color: white;
+      font-size: 28px;
+      text-shadow: 0 0 15px #ffcc00;
+    }
+  </style>
 </head>
-
 <body>
   <div id="unity-container">
     <canvas id="unity-canvas"></canvas>
 
+    <!-- Loading -->
+    <div id="loading-screen">
+      <canvas id="particle-canvas"></canvas>
+      <img class="loading-logo" src="logo.png" alt="Khelogy Logo" />
+      <div class="loading-bar-container"><div class="loading-bar-fill" id="loading-bar"></div></div>
+      <div class="loading-text" id="loading-text">Loading...</div>
+    </div>
+
+    <!-- Ads -->
+    <div id="interstitialAd" class="ad-overlay"><div id="div-gpt-ad-interstitial"></div></div>
+    <div id="rewardedAd" class="ad-overlay"><div id="div-gpt-ad-rewarded"></div></div>
   </div>
 
-  <!-- Unity Game Bootstrap Script -->
   <script>
-    function isIOS() {
-      return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    // Neon spark particles
+    const particleCanvas = document.getElementById('particle-canvas');
+    const ctx = particleCanvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+      particleCanvas.width = window.innerWidth;
+      particleCanvas.height = window.innerHeight;
     }
 
-    var buildUrl = "Build";
-    var config = {
-      dataUrl: buildUrl + "/LinkUpPuzzleMatch.data.br",
-      frameworkUrl: buildUrl + "/LinkUpPuzzleMatch.framework.js.br",
-      codeUrl: buildUrl + "/LinkUpPuzzleMatch.wasm.br",
-      streamingAssetsUrl: "StreamingAssets",
-      companyName: "YourCompany",
-      productName: "YourProduct",
-      productVersion: "1.0",
-      showBanner: (msg, type) => { },
-      initialMemory: isIOS() ? 128 * 1024 * 1024 : 256 * 1024 * 1024,
-      memory: isIOS() ? 512 * 1024 * 1024 : 1024 * 1024 * 1024,
-      heapGrowth: true
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    for (let i = 0; i < 70; i++) {
+      particles.push({
+        x: Math.random() * particleCanvas.width,
+        y: Math.random() * particleCanvas.height,
+        r: Math.random() * 2 + 1,
+        d: Math.random() * 0.5 + 0.2,
+        opacity: Math.random() * 0.5 + 0.3
+      });
+    }
+
+    function drawParticles() {
+      ctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+      particles.forEach(p => {
+        ctx.beginPath();
+        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4);
+        grad.addColorStop(0, `rgba(255, 220, 50, ${p.opacity})`);
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.arc(p.x, p.y, p.r * 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      moveParticles();
+      requestAnimationFrame(drawParticles);
+    }
+
+    function moveParticles() {
+      particles.forEach(p => {
+        p.y += p.d;
+        p.x += Math.sin(p.y * 0.01) * 0.2;
+        if (p.y > particleCanvas.height) {
+          p.y = -10;
+          p.x = Math.random() * particleCanvas.width;
+        }
+      });
+    }
+
+    drawParticles();
+
+    // Unity loading logic
+    function isIOS(){return /iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;}
+    const buildUrl="Build";
+    const config={
+      dataUrl:buildUrl+"/Penguin Adventure Icy Platform Quest_DisableCompression.data",
+      frameworkUrl:buildUrl+"/Penguin Adventure Icy Platform Quest_DisableCompression.framework.js",
+      codeUrl:buildUrl+"/Penguin Adventure Icy Platform Quest_DisableCompression.wasm",
+      streamingAssetsUrl:"StreamingAssets",
+      companyName:"Khelogy",productName:"Smart Play Games",productVersion:"1.0",
+      showBanner:(m,t)=>{},
+      initialMemory:isIOS()?128*1024*1024:256*1024*1024,
+      memory:isIOS()?512*1024*1024:1024*1024*1024,
+      heapGrowth:true
     };
+    if(isIOS()){config.devicePixelRatio=1;config.matchWebGLToCanvasSize=false;}
 
-    if (isIOS()) {
-      config.devicePixelRatio = 1;
-      config.matchWebGLToCanvasSize = false;
-    }
+    const canvas=document.querySelector("#unity-canvas"),
+          bar=document.getElementById("loading-bar"),
+          text=document.getElementById("loading-text"),
+          screen=document.getElementById("loading-screen");
 
-    const canvas = document.querySelector("#unity-canvas");
-    const bar = document.getElementById("loading-bar");
-    const text = document.getElementById("loading-text");
-    const screen = document.getElementById("loading-screen");
-
-    createUnityInstance(canvas, config, progress => {
-      const percent = (progress * 100).toFixed(0);
-      bar.style.width = `${percent}%`;
-
-      if (percent < 100) {
-        text.textContent = `Loading... ${percent}%`;
-      } else {
-        text.textContent = "Please wait, we are almost ready...";
+    createUnityInstance(canvas,config,p=>{
+      const percent=(p*100).toFixed(0);
+      bar.style.width=`${percent}%`;
+      if(percent<100){text.textContent=`Loading... ${percent}%`;}
+      else{
+        text.textContent="Please wait, we are almost ready...";
         screen.classList.add("clear");
       }
-    })
-      .then(instance => {
-        window.gameInstance = instance;
-
-        text.textContent = "Game is ready!";
-        setTimeout(() => {
-          screen.style.opacity = "0";
-          setTimeout(() => screen.style.display = "none", 600);
-        }, 1000);
-      });
+    }).then(u=>{
+      window.gameInstance=u;
+      text.textContent="Game is ready!";
+      setTimeout(()=>{
+        screen.style.opacity="0";
+        setTimeout(()=>screen.style.display="none",600);
+      },1000);
+    });
   </script>
 </body>
-
 </html>
