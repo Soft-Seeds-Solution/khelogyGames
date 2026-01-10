@@ -1,15 +1,17 @@
-/games/*/Build/*.js.br
+# Brotli Unity WebGL (only .br files)
+
+**/*.js.br
   Content-Type: application/javascript
   Content-Encoding: br
 
-/games/*/Build/*.framework.js.br
+**/*.framework.js.br
   Content-Type: application/javascript
   Content-Encoding: br
 
-/games/*/Build/*.wasm.br
+**/*.wasm.br
   Content-Type: application/wasm
   Content-Encoding: br
 
-/games/*/Build/*.data.br
+**/*.data.br
   Content-Type: application/octet-stream
   Content-Encoding: br
