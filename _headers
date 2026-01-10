@@ -1,17 +1,15 @@
-# Brotli Unity WebGL (only .br files)
-
-**/*.js.br
+/games/MoneyStackRunnerGame/Build/MoneyStackRunnerGame.js.br
   Content-Type: application/javascript
   Content-Encoding: br
 
-**/*.framework.js.br
+/games/MoneyStackRunnerGame/Build/MoneyStackRunnerGame.framework.js.br
   Content-Type: application/javascript
   Content-Encoding: br
 
-**/*.wasm.br
+/games/MoneyStackRunnerGame/Build/MoneyStackRunnerGame.wasm.br
   Content-Type: application/wasm
   Content-Encoding: br
 
-**/*.data.br
+/games/MoneyStackRunnerGame/Build/MoneyStackRunnerGame.data.br
   Content-Type: application/octet-stream
   Content-Encoding: br
